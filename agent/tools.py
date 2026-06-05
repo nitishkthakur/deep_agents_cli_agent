@@ -53,9 +53,10 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
-from typing import Optional
+from typing import Annotated, Optional
 
 from langchain_core.tools import tool
+from pydantic import Field
 
 
 # ---------------------------------------------------------------------------
@@ -80,7 +81,11 @@ def create_tools(cwd: str) -> list:
     # 1. read_file
     # ------------------------------------------------------------------ #
     @tool
-    def read_file(path: str, start_line: int = 1, end_line: int = -1) -> str:
+    def read_file(
+        path: Annotated[str, Field(description="File path, e.g. 'src/main.py'")],
+        start_line: Annotated[int, Field(description="First line (1-indexed), e.g. 10")] = 1,
+        end_line: Annotated[int, Field(description="Last line inclusive (-1 = EOF), e.g. 25")] = -1,
+    ) -> str:
         """Read the contents of a file and return them with line numbers.
 
         Use this tool to inspect source code, configuration files, logs, or
@@ -126,7 +131,10 @@ def create_tools(cwd: str) -> list:
     # 2. write_file
     # ------------------------------------------------------------------ #
     @tool
-    def write_file(path: str, content: str) -> str:
+    def write_file(
+        path: Annotated[str, Field(description="Destination file path, e.g. 'src/utils.py'")],
+        content: Annotated[str, Field(description="Text content to write to the file")],
+    ) -> str:
         """Write *content* to *path*, creating parent directories as needed.
 
         Use this tool to create new files or overwrite existing ones.  Parent
@@ -166,7 +174,11 @@ def create_tools(cwd: str) -> list:
     # 3. edit_file
     # ------------------------------------------------------------------ #
     @tool
-    def edit_file(path: str, old_str: str, new_str: str) -> str:
+    def edit_file(
+        path: Annotated[str, Field(description="File to edit, e.g. 'app.py'")],
+        old_str: Annotated[str, Field(description="Exact text to find (must be unique), e.g. 'import os'")],
+        new_str: Annotated[str, Field(description="Replacement text, e.g. 'import os\\nimport sys'")],
+    ) -> str:
         """Replace exactly one occurrence of *old_str* with *new_str* in a file.
 
         Use this tool for surgical, targeted edits to existing files — fixing
@@ -229,7 +241,9 @@ def create_tools(cwd: str) -> list:
     # 4. list_dir
     # ------------------------------------------------------------------ #
     @tool
-    def list_dir(path: str = ".") -> str:
+    def list_dir(
+        path: Annotated[str, Field(description="Directory to list, e.g. 'src/components'")] = ".",
+    ) -> str:
         """List the contents of a directory.
 
         Use this tool to explore project structure, discover files and
@@ -275,7 +289,11 @@ def create_tools(cwd: str) -> list:
     # 5. find_files
     # ------------------------------------------------------------------ #
     @tool
-    def find_files(pattern: str, directory: str = ".", recursive: bool = True) -> str:
+    def find_files(
+        pattern: Annotated[str, Field(description="Glob or regex pattern, e.g. '*.py' or '^test_.*\\.py$'")],
+        directory: Annotated[str, Field(description="Root directory to search, e.g. 'src'")] = ".",
+        recursive: Annotated[bool, Field(description="Search subdirectories (default True)")] = True,
+    ) -> str:
         """Find files whose **names** match a glob or regex pattern.
 
         Use this tool to locate files by name across the project — e.g., find
@@ -354,10 +372,10 @@ def create_tools(cwd: str) -> list:
     # ------------------------------------------------------------------ #
     @tool
     def grep_search(
-        pattern: str,
-        path: str = ".",
-        file_pattern: str = "*",
-        case_sensitive: bool = True,
+        pattern: Annotated[str, Field(description="Python regex to search for, e.g. 'def calculate'")],
+        path: Annotated[str, Field(description="File or directory to search, e.g. 'src/'")] = ".",
+        file_pattern: Annotated[str, Field(description="Glob filter for file names, e.g. '*.py'")] = "*",
+        case_sensitive: Annotated[bool, Field(description="Case-sensitive matching (default True)")] = True,
     ) -> str:
         """Search for a regex pattern inside file contents.
 
@@ -438,7 +456,10 @@ def create_tools(cwd: str) -> list:
     # 7. run_python
     # ------------------------------------------------------------------ #
     @tool
-    def run_python(code: str, timeout: int = 60) -> str:
+    def run_python(
+        code: Annotated[str, Field(description="Python source code to execute, e.g. 'print(2 + 2)'")],
+        timeout: Annotated[int, Field(description="Max execution time in seconds, e.g. 30")] = 60,
+    ) -> str:
         """Execute Python code using the **current** Python interpreter.
 
         Use this tool to run data transformations, test snippets, perform
@@ -509,7 +530,10 @@ def create_tools(cwd: str) -> list:
     # 8. run_command
     # ------------------------------------------------------------------ #
     @tool
-    def run_command(command: str, timeout: int = 60) -> str:
+    def run_command(
+        command: Annotated[str, Field(description="Shell command to execute, e.g. 'pytest -v tests/'")],
+        timeout: Annotated[int, Field(description="Max execution time in seconds, e.g. 120")] = 60,
+    ) -> str:
         """Execute a shell command in the working directory.
 
         Use this tool to run build tools, linters, test suites, git commands,
@@ -569,7 +593,9 @@ def create_tools(cwd: str) -> list:
     # 9. create_directory
     # ------------------------------------------------------------------ #
     @tool
-    def create_directory(path: str) -> str:
+    def create_directory(
+        path: Annotated[str, Field(description="Directory path to create, e.g. 'src/components/auth'")],
+    ) -> str:
         """Create a directory and all necessary parent directories.
 
         Use this tool to set up project scaffolding or ensure a directory
@@ -605,7 +631,9 @@ def create_tools(cwd: str) -> list:
     # 10. delete_file
     # ------------------------------------------------------------------ #
     @tool
-    def delete_file(path: str) -> str:
+    def delete_file(
+        path: Annotated[str, Field(description="Path to file or directory to delete, e.g. 'build/cache'")],
+    ) -> str:
         """Delete a file or an entire directory tree.
 
         Use this tool to remove obsolete files, clean up generated artifacts,
@@ -645,7 +673,10 @@ def create_tools(cwd: str) -> list:
     # 11. move_file
     # ------------------------------------------------------------------ #
     @tool
-    def move_file(source: str, destination: str) -> str:
+    def move_file(
+        source: Annotated[str, Field(description="Current path, e.g. 'old_name.py'")],
+        destination: Annotated[str, Field(description="Target path, e.g. 'src/new_name.py'")],
+    ) -> str:
         """Move or rename a file or directory.
 
         Use this tool to reorganise project structure, rename files for
@@ -685,7 +716,9 @@ def create_tools(cwd: str) -> list:
     # 12. get_file_info
     # ------------------------------------------------------------------ #
     @tool
-    def get_file_info(path: str) -> str:
+    def get_file_info(
+        path: Annotated[str, Field(description="File or directory path, e.g. 'data/report.csv'")],
+    ) -> str:
         """Return metadata for a file or directory as JSON.
 
         Use this tool to check file size, modification time, permissions, or
@@ -737,7 +770,9 @@ def create_tools(cwd: str) -> list:
     # 13. read_url
     # ------------------------------------------------------------------ #
     @tool
-    def read_url(url: str) -> str:
+    def read_url(
+        url: Annotated[str, Field(description="URL to fetch, e.g. 'https://example.com/api/docs'")],
+    ) -> str:
         """Fetch a URL and return its text content (first 5 000 characters).
 
         Use this tool to retrieve API documentation, reference material,
@@ -794,7 +829,10 @@ def create_tools(cwd: str) -> list:
     # 14. git_diff
     # ------------------------------------------------------------------ #
     @tool
-    def git_diff(path: str = ".", cached: bool = False) -> str:
+    def git_diff(
+        path: Annotated[str, Field(description="File or directory to diff, e.g. 'src/main.py'")] = ".",
+        cached: Annotated[bool, Field(description="Show staged changes instead of working tree")] = False,
+    ) -> str:
         """Show the git diff for the working tree or staged changes.
 
         Use this tool to review uncommitted modifications, verify that edits
@@ -847,7 +885,10 @@ def create_tools(cwd: str) -> list:
     # 15. git_log
     # ------------------------------------------------------------------ #
     @tool
-    def git_log(max_entries: int = 10, path: str = ".") -> str:
+    def git_log(
+        max_entries: Annotated[int, Field(description="Number of commits to show, e.g. 20")] = 10,
+        path: Annotated[str, Field(description="Limit to commits touching this path, e.g. 'src/'")] = ".",
+    ) -> str:
         """Show the recent git commit history.
 
         Use this tool to understand what changes have been made recently,

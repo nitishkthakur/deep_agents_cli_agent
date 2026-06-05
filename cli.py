@@ -9,8 +9,9 @@ Interactive mode (prompts for working directory):
 Single-shot mode:
     python cli.py "List all Python files in this project"
 
-Custom config / working directory:
-    python cli.py --config /path/to/config.yaml --cwd /my/project "Fix the bug"
+Custom config / working directory (--cwd and --root are equivalent):
+    python cli.py --root /my/project "Fix the bug"
+    python cli.py --cwd /my/project "Fix the bug"
 
 Add extra MCP servers at runtime:
     python cli.py --mcp-server '{"name":"fs","command":"npx","args":["-y","@mcp/server-filesystem","."]}' "..."
@@ -36,10 +37,14 @@ def _parse_args() -> argparse.Namespace:
         help="Path to YAML config file (default: ./config.yaml or built-in)",
     )
     parser.add_argument(
-        "--cwd",
+        "--cwd", "--root",
         default=None,
         metavar="DIR",
-        help="Working directory for file / shell tools (prompted if omitted)",
+        help=(
+            "Root working directory for all file and shell tools. "
+            "Every relative path used by the agent is resolved against this directory. "
+            "If omitted, you will be prompted interactively."
+        ),
     )
     parser.add_argument(
         "--mcp-server",
