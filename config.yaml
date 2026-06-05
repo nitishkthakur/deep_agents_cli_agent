@@ -1,0 +1,42 @@
+# Default configuration for Deep Agents CLI Agent
+#
+# Copy this file and edit to customise. Pass --config /path/to/your/config.yaml
+# to the CLI to use a custom configuration.
+
+model:
+  # LLM provider.  Currently supported: "ollama"
+  provider: ollama
+  # Ollama model name — must be pulled first: `ollama pull llama3.2`
+  name: llama3.2
+  # Ollama server URL (local or cloud-hosted Ollama-compatible endpoint)
+  base_url: http://localhost:11434
+  # Sampling temperature (0 = deterministic)
+  temperature: 0
+
+agent:
+  # Maximum number of reasoning + tool-call iterations
+  max_iterations: 20
+  # System prompt injected at the start of every conversation
+  system_prompt: >
+    You are a helpful general-purpose coding assistant.
+    You have access to tools that let you read, write, and edit files,
+    search code, run Python and shell commands, inspect git history,
+    and fetch URLs.
+    Always prefer reading existing files before writing new ones.
+    Reason step-by-step and use tools to verify your work.
+
+# Custom MCP servers (Model Context Protocol).
+# Each entry starts the server process and makes its tools available.
+#
+# Example:
+# mcp_servers:
+#   - name: filesystem
+#     command: npx
+#     args: ["-y", "@modelcontextprotocol/server-filesystem", "/path/to/dir"]
+#     env: {}
+#   - name: my_server
+#     command: python
+#     args: ["/path/to/my_mcp_server.py"]
+#     env:
+#       MY_API_KEY: "secret"
+mcp_servers: []
